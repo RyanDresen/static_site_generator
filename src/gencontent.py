@@ -1,30 +1,47 @@
 import os
 from markdown_blocks import markdown_to_html_node
 
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    print(f" * generating html from: {dir_path_content} -> {dest_dir_path}")
 
-def generate_page(from_path, template_path, dest_path):
-    print(f" * {from_path} {template_path} -> {dest_path}")
-    from_file = open(from_path, "r")
-    markdown_content = from_file.read()
-    from_file.close()
+    # Ensure destination dir exists
+    os.makedirs(dest_dir_path, exist_ok=True)
 
-    template_file = open(template_path, "r")
-    template = template_file.read()
-    template_file.close()
+    for item in os.listdir(dir_path_content):
+        current_full_path = os.path.join(dir_path_content, item)
 
-    node = markdown_to_html_node(markdown_content)
-    html = node.to_html()
+        # If it's a directory, recurse into it
+        if os.path.isdir(current_full_path):
+            new_dest_dir = os.path.join(dest_dir_path, item)
+            generate_pages_recursive(current_full_path, template_path, new_dest_dir)
 
-    title = extract_title(markdown_content)
-    template = template.replace("{{ Title }}", title)
-    template = template.replace("{{ Content }}", html)
+        # If it's a markdown file, generate an HTML file
+        elif os.path.isfile(current_full_path) and item.endswith(".md"):
+            with open(current_full_path, "r", encoding="utf-8") as from_file:
+                markdown_content = from_file.read()
 
-    dest_dir_path = os.path.dirname(dest_path)
-    if dest_dir_path != "":
-        os.makedirs(dest_dir_path, exist_ok=True)
-    to_file = open(dest_path, "w")
-    to_file.write(template)
+            with open(template_path, "r", encoding="utf-8") as template_file:
+                template = template_file.read()
 
+            node = markdown_to_html_node(markdown_content)
+            html = node.to_html()
+
+            title = extract_title(markdown_content)
+            template = template.replace("{{ Title }}", title)
+            template = template.replace("{{ Content }}", html)
+
+            # e.g. "index.md" -> "index.html"
+            base_name, _ = os.path.splitext(item)
+            dest_file_path = os.path.join(dest_dir_path, base_name + ".html")
+
+            with open(dest_file_path, "w", encoding="utf-8") as to_file:
+                to_file.write(template)
+
+            print(f"   - generated {dest_file_path}")
+        else:
+            # Non-markdown files in content/ are ignored
+            pass
+    
 
 def extract_title(md):
     lines = md.split("\n")
