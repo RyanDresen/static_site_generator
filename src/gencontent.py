@@ -29,8 +29,8 @@ def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, bas
             title = extract_title(markdown_content)
             template = template.replace("{{ Title }}", title)
             template = template.replace("{{ Content }}", html)
-            template = template.replace("href=/", "href={basepath}")
-            template = template.replace("src=/", "src={basepath}")
+            template = template.replace('href="/', 'href="' + basepath)
+            template = template.replace('src="/', 'src="' + basepath)
 
             # e.g. "index.md" -> "index.html"
             base_name, _ = os.path.splitext(item)
